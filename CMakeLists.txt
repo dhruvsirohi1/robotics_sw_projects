@@ -10,7 +10,13 @@ add_library(robot_localization
         src/odometry.cpp
 )
 
-add_library(dexterity STATIC
-        include/robot_localization/pose2d.h
-        include/robot_localization/Odometry.h
-        src/Odometry.cpp)
+# ---- GoogleTest Setup ----
+include(FetchContent)
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/release-1.12.1.zip
+)
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+add_subdirectory(test)
