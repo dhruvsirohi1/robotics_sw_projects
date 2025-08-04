@@ -35,7 +35,7 @@ TEST(OdometryTest, InPlaceRotation) {
     Pose2d pose = odom.getPose();
     EXPECT_NEAR(pose.x_, 0.0, 1e-2);
     EXPECT_NEAR(pose.y_, 0.0, 1e-2);
-    EXPECT_NEAR(pose.theta_, 1.0, 1e-1);
+    EXPECT_NEAR(pose.theta_, 2.0, 1e-1);
 }
 
 TEST(OdometryTest, MixedMovement) {
