@@ -10,6 +10,8 @@ add_library(robot_localization
         src/odometry.cpp
 )
 
+#add_library(circular_buffer)
+
 # ---- GoogleTest Setup ----
 include(FetchContent)
 FetchContent_Declare(
