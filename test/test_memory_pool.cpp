@@ -1,0 +1,67 @@
+//
+// Created by Dhruv Sirohi on 8/6/25.
+//
+
+#include <gtest/gtest.h>
+#include <memory_pool/memory_pool.h>
+#include <string>
+
+using namespace memory_pool;
+
+struct TestStruct {
+    int id;
+    std::string name;
+
+    TestStruct(int i, std::string n) : id(i), name(std::move(n)) {}
+};
+
+TEST(MemoryPoolTest, AllocateDeallocate) {
+    MemoryPool<TestStruct, 10> pool;
+
+    TestStruct* obj = pool.allocate();
+    new (obj) TestStruct(1, "robot");
+    EXPECT_EQ(obj->id, 1);
+    EXPECT_EQ(obj->name, "robot");
+
+    obj->~TestStruct();   // manually call destructor
+    pool.deallocate(obj);
+}
+
+TEST(MemoryPoolTest, MemoryReuse) {
+    MemoryPool<TestStruct, 2> pool;
+
+    TestStruct* a = pool.allocate();
+    new (a) TestStruct(10, "A");
+
+    TestStruct* b = pool.allocate();
+    new (b) TestStruct(20, "B");
+
+    a->~TestStruct();
+    b->~TestStruct();
+    pool.deallocate(a);
+    pool.deallocate(b);
+
+    // Allocate again and check reuse
+    TestStruct* c = pool.allocate();
+    new (c) TestStruct(30, "C");
+    EXPECT_EQ(c->id, 30);
+    c->~TestStruct();
+    pool.deallocate(c);
+}
+
+TEST(MemoryPoolTest, ExhaustionThrows) {
+    MemoryPool<int, 1> pool;
+    int* a = pool.allocate();
+    EXPECT_THROW(pool.allocate(), std::bad_alloc);
+    pool.deallocate(a);
+}
+
+TEST(MemoryPoolTest, MultipleAllocFreeCycle) {
+    MemoryPool<int, 3> pool;
+    for (int i = 0; i < 1000; ++i) {
+        int* a = pool.allocate();
+        *a = i;
+        pool.deallocate(a);
+    }
+    SUCCEED();  // If it survives 1000 cycles, it's good
+}

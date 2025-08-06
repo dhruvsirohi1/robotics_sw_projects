@@ -9,12 +9,11 @@
 namespace memory_pool {
 
 template<typename T, std::size_t BLOCK_COUNT = 1024>
-class memory_pool {
+class MemoryPool {
 public:
-    memory_pool() {
+    MemoryPool() {
         static_assert(BLOCK_COUNT > 0);
-        static_assert(sizeof(T) >= sizeof(void*));
-        memory_.resize(BLOCK_COUNT * sizeof(T));
+        memory_.resize(BLOCK_COUNT * std::max(sizeof(T), sizeof(void*)));
         free_list_ = reinterpret_cast<void**>(memory_.data());
 
         for (std::size_t i = 0; i < BLOCK_COUNT - 1; ++i) {
@@ -25,7 +24,7 @@ public:
         free_ptr_ = reinterpret_cast<void*>(free_list_);
     }
 
-    ~memory_pool() = default;
+    ~MemoryPool() = default;
 
     /**
      * Allocates a single block of memory.
@@ -34,7 +33,7 @@ public:
         if (!free_ptr_) {
             throw std::bad_alloc();
         }
-        T* ptr = free_ptr_;
+        T* ptr = reinterpret_cast<T*>(free_ptr_);
         free_ptr_ = *(reinterpret_cast<void**>(free_ptr_));
         return ptr;
     }

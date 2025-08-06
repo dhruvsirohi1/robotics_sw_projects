@@ -7,7 +7,13 @@ target_link_libraries(test_odometry
 add_executable(test_circular_buffer test_circular_buffer.cpp)
 target_link_libraries(test_circular_buffer gtest_main)
 target_include_directories(test_circular_buffer PRIVATE
-        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/include/circular_buffer
+)
+
+add_executable(test_memory_pool test_memory_pool.cpp)
+target_link_libraries(test_memory_pool gtest_main)
+target_include_directories(test_memory_pool PRIVATE
+        ${PROJECT_SOURCE_DIR}/include/memory_pool
 )
 
 include(GoogleTest)
