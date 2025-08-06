@@ -19,9 +19,9 @@ class CircularBuffer {
 
 public:
 
-    CircularBuffer(int capacity):
+    explicit CircularBuffer(int capacity):
     capacity_(capacity),
-    size_(capacity),
+    size_(0),
     buffer_(capacity),
     head_(0),
     tail_(0),
@@ -31,19 +31,17 @@ public:
     void push(T element) {
         buffer_[head_] = element;
         head_ = (head_ + 1) % capacity_;
-
         if (is_full_) {
             tail_ = (tail_ + 1) % capacity_;
         }
-
         size_ = std::min(size_ + 1, capacity_);
-
         is_full_ = tail_ == head_;
     }
 
     T pop() {
-        if (size_ == 0) return nullptr;
-
+        if (size_ == 0) {
+            throw std::runtime_error("CircularBuffer: pop() from empty buffer");
+        }
         T element = buffer_[tail_];
         tail_ = (tail_ + 1) % capacity_;
         size_--;
@@ -52,8 +50,10 @@ public:
     }
 
     const T& front() const {
-        if (size_ == 0) return nullptr;
-        return buffer_[head_];
+        if (size_ == 0) {
+            throw std::runtime_error("CircularBuffer: front() from empty buffer");
+        }
+        return buffer_[tail_];
     }
 
     size_t size() const {
@@ -64,6 +64,10 @@ public:
         head_ = tail_;
         is_full_ = false;
         size_ = 0;
+    }
+
+    bool empty() const {
+        return size_ == 0;
     }
 };
 }
