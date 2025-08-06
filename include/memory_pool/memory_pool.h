@@ -13,11 +13,14 @@ class MemoryPool {
 public:
     MemoryPool() {
         static_assert(BLOCK_COUNT > 0);
-        memory_.resize(BLOCK_COUNT * std::max(sizeof(T), sizeof(void*)));
+        printf("Allocating %lu bytes per block for T\n", std::max(sizeof(T), sizeof(void*)));
+        const std::size_t block_size = std::max(sizeof(T), sizeof(void*));
+        memory_.resize(BLOCK_COUNT * block_size);
         free_list_ = reinterpret_cast<void**>(memory_.data());
 
-        for (std::size_t i = 0; i < BLOCK_COUNT - 1; ++i) {
-            free_list_[i] = &free_list_[i + 1];
+        for (std::size_t i = 1; i < BLOCK_COUNT - 1; i += 2) {
+            free_list_[i] = (free_list_ + i * block_size);
+            // printf("Address of free_list_[i]: %p\n", free_list_[i]);
         }
 
         free_list_[BLOCK_COUNT - 1] = nullptr;
@@ -33,9 +36,9 @@ public:
         if (!free_ptr_) {
             throw std::bad_alloc();
         }
-        T* ptr = reinterpret_cast<T*>(free_ptr_);
-        free_ptr_ = *(reinterpret_cast<void**>(free_ptr_));
-        return ptr;
+        void* ptr = free_ptr_;
+        free_ptr_ = *reinterpret_cast<void**>(free_ptr_);
+        return static_cast<T*>(ptr);
     }
 
     void deallocate(T* ptr) {
