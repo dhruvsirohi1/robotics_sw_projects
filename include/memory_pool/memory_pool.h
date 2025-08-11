@@ -8,46 +8,47 @@
 
 namespace memory_pool {
 
-template<typename T, std::size_t BLOCK_COUNT = 1024>
+template <typename T, std::size_t NUM_BLOCKS = 1024>
 class MemoryPool {
+
 public:
-    MemoryPool() {
-        static_assert(BLOCK_COUNT > 0);
-        printf("Allocating %lu bytes per block for T\n", std::max(sizeof(T), sizeof(void*)));
-        const std::size_t block_size = std::max(sizeof(T), sizeof(void*));
-        memory_.resize(BLOCK_COUNT * block_size);
-        free_list_ = reinterpret_cast<void**>(memory_.data());
-
-        for (std::size_t i = 1; i < BLOCK_COUNT - 1; i += 2) {
-            free_list_[i] = (free_list_ + i * block_size);
-            // printf("Address of free_list_[i]: %p\n", free_list_[i]);
+    MemoryPool(): free_ptr_(nullptr), free_list_(nullptr) {
+        data_.resize(NUM_BLOCKS * sizeof(T));
+        for (int i = 0; i < NUM_BLOCKS - 1; i++) {
+            // Write the address of the next block
+            // into the first 8 bytes of the current
+            // block
+            std::byte *curr = data_.data() + i * sizeof(T);
+            const std::byte *next = curr + sizeof(T);
+            std::memcpy(curr, &next, sizeof(next));
         }
-
-        free_list_[BLOCK_COUNT - 1] = nullptr;
-        free_ptr_ = reinterpret_cast<void*>(free_list_);
+        void* nullp = nullptr;
+        std::memcpy(data_.data() + (NUM_BLOCKS - 1) * sizeof(T), &nullp, sizeof(void *));
+        // Write the address of the first free block in free_ptr_
+        free_ptr_ = data_.data();
     }
 
-    ~MemoryPool() = default;
-
-    /**
-     * Allocates a single block of memory.
-     **/
     T* allocate() {
-        if (!free_ptr_) {
-            throw std::bad_alloc();
-        }
-        void* ptr = free_ptr_;
-        free_ptr_ = *reinterpret_cast<void**>(free_ptr_);
-        return static_cast<T*>(ptr);
+        if (free_ptr_ == nullptr) {return nullptr;}
+        printf("free_ptr_ before: %p\n", free_ptr_);
+        // Store the ptr to be returned
+        T* ptr = static_cast<T*>(free_ptr_);
+        // Advance the free_ptr_ by
+        // dereferencing the current address it points to
+        std::memcpy(&free_ptr_, free_ptr_, sizeof(void*));
+        printf("free_ptr_ after: %p\n", free_ptr_);
+        return ptr;
     }
 
     void deallocate(T* ptr) {
-        *reinterpret_cast<void**>(ptr) = free_ptr_;
-        free_ptr_ = ptr;
+        // 1. Make ptr point to free_ptr_
+        std::memcpy(ptr , &free_ptr_, sizeof(void*));
+        // 2. Make the free_ptr_ point to ptr
+        std::memcpy(&free_ptr_, &ptr, sizeof(void*));
     }
 
 private:
-    std::vector<std::byte> memory_;
+    std::vector<std::byte> data_;
     void* free_ptr_;
     void** free_list_;
 };

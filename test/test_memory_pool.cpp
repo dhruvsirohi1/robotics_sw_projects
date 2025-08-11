@@ -30,9 +30,12 @@ TEST(MemoryPoolTest, AllocateDeallocate) {
 
     obj->~TestStruct();   // manually call destructor
     pool.deallocate(obj);
+    pool.deallocate(obj2);
+    printf("\n\nwor\n\n");
 }
 
 TEST(MemoryPoolTest, MemoryReuse) {
+    printf("Test 2\n");
     MemoryPool<TestStruct, 2> pool;
 
     TestStruct* a = pool.allocate();
@@ -62,6 +65,7 @@ TEST(MemoryPoolTest, MemoryReuse) {
 // }
 
 TEST(MemoryPoolTest, MultipleAllocFreeCycle) {
+    printf("Test 3\n");
     MemoryPool<int, 3> pool;
     for (int i = 0; i < 1000; ++i) {
         int* a = pool.allocate();
