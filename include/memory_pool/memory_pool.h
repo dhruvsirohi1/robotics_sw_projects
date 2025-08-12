@@ -8,49 +8,40 @@
 
 namespace memory_pool {
 
-template <typename T, std::size_t NUM_BLOCKS = 1024>
+template <typename T, std::size_t N = 1024>
 class MemoryPool {
-
+    std::vector<std::byte> buffer_;
+    void* free_ptr_;
 public:
-    MemoryPool(): free_ptr_(nullptr), free_list_(nullptr) {
-        data_.resize(NUM_BLOCKS * sizeof(T));
-        for (int i = 0; i < NUM_BLOCKS - 1; i++) {
-            // Write the address of the next block
-            // into the first 8 bytes of the current
-            // block
-            std::byte *curr = data_.data() + i * sizeof(T);
-            const std::byte *next = curr + sizeof(T);
-            std::memcpy(curr, &next, sizeof(next));
+    MemoryPool(): free_ptr_(nullptr) {
+        assert(N > 0);
+        // Create buffer, with each block big enough to at least hold a memory address
+        buffer_.resize(N * std::max(sizeof(T), sizeof(void*)));
+        for (std::size_t i = 0; i < N - 1; ++i) {
+            std::byte* curr = buffer_.data() + i * std::max(sizeof(T), sizeof(void*));
+            std::byte* next = curr + std::max(sizeof(T), sizeof(void*));
+            std::memcpy(curr, &next, sizeof(void*));
         }
+        // Let the last block point to nullptr
         void* nullp = nullptr;
-        std::memcpy(data_.data() + (NUM_BLOCKS - 1) * sizeof(T), &nullp, sizeof(void *));
-        // Write the address of the first free block in free_ptr_
-        free_ptr_ = data_.data();
+        std::memcpy(buffer_.data() + (N - 1) * std::max(sizeof(T), sizeof(void*)), &nullp, sizeof(void*));
+        // Let the free_ptr_ point to the first block
+        std::memcpy(&free_ptr_, &buffer_, sizeof(void*));
     }
 
     T* allocate() {
         if (free_ptr_ == nullptr) {return nullptr;}
-        printf("free_ptr_ before: %p\n", free_ptr_);
-        // Store the ptr to be returned
-        T* ptr = static_cast<T*>(free_ptr_);
-        // Advance the free_ptr_ by
-        // dereferencing the current address it points to
+        T* ret = static_cast<T*>(free_ptr_);
         std::memcpy(&free_ptr_, free_ptr_, sizeof(void*));
-        printf("free_ptr_ after: %p\n", free_ptr_);
-        return ptr;
+        return ret;
     }
 
     void deallocate(T* ptr) {
-        // 1. Make ptr point to free_ptr_
-        std::memcpy(ptr , &free_ptr_, sizeof(void*));
-        // 2. Make the free_ptr_ point to ptr
+        // Write the next free block in the ptr to be deallocated
+        std::memcpy(ptr, &free_ptr_, sizeof(void*));
+        // Make free_ptr_ point to newly free ptr
         std::memcpy(&free_ptr_, &ptr, sizeof(void*));
     }
-
-private:
-    std::vector<std::byte> data_;
-    void* free_ptr_;
-    void** free_list_;
 };
 }
 #endif //MEMORY_POOL_H
