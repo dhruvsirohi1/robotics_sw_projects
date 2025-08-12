@@ -8,66 +8,57 @@
 #include <vector>
 
 namespace circular_buffer {
+
 template <typename T>
 class CircularBuffer {
-    int capacity_;
+    std::vector<T> data_;
     int size_;
-    std::vector<T> buffer_;
+    int capacity_;
     int head_;
     int tail_;
-    bool is_full_;
-
 public:
 
-    explicit CircularBuffer(int capacity):
-    capacity_(capacity),
-    size_(0),
-    buffer_(capacity),
-    head_(0),
-    tail_(0),
-    is_full_(false) {
-    };
+    CircularBuffer(int capacity) :
+    size_(0), capacity_(capacity){
+        head_ = tail_ = 0;
+        data_.reserve(capacity);
+    }
 
-    void push(T element) {
-        buffer_[head_] = element;
-        head_ = (head_ + 1) % capacity_;
-        if (is_full_) {
+    bool push(const T& item) {
+        data_[head_] = item;
+        size_ = std::min(size_ + 1, capacity_);
+        if (head_ == tail_ && size_ == capacity_) {
             tail_ = (tail_ + 1) % capacity_;
         }
-        size_ = std::min(size_ + 1, capacity_);
-        is_full_ = tail_ == head_;
+        head_ = (head_ + 1) % capacity_;
+        return true;
+    }
+
+    T front() {
+        if (empty()) throw std::runtime_error("Buffer is empty");
+        T front = data_[tail_];
+        return front;
     }
 
     T pop() {
-        if (size_ == 0) {
-            throw std::runtime_error("CircularBuffer: pop() from empty buffer");
-        }
-        T element = buffer_[tail_];
+        if (empty()) throw std::runtime_error("Buffer is empty");
+        T item = data_[tail_];
         tail_ = (tail_ + 1) % capacity_;
-        size_--;
-        is_full_ = false;
-        return element;
+        size_ = std::min(size_ - 1, capacity_);
+        return item;
     }
 
-    const T& front() const {
-        if (size_ == 0) {
-            throw std::runtime_error("CircularBuffer: front() from empty buffer");
-        }
-        return buffer_[tail_];
-    }
-
-    size_t size() const {
-        return size_;
-    }
-
-    void clear() {
-        head_ = tail_;
-        is_full_ = false;
-        size_ = 0;
+    bool isFull() const {
+        return head_ == tail_;
     }
 
     bool empty() const {
         return size_ == 0;
+    }
+
+    void clear() {
+        head_ = tail_ = 0;
+        size_ = 0;
     }
 };
 }
