@@ -9,56 +9,55 @@
 
 namespace circular_buffer {
 
-template <typename T>
+template<typename T, std::size_t N>
 class CircularBuffer {
     std::vector<T> data_;
-    int size_;
-    int capacity_;
     int head_;
     int tail_;
-public:
+    int size_;
+    int capacity_;
 
-    CircularBuffer(int capacity) :
-    size_(0), capacity_(capacity){
-        head_ = tail_ = 0;
-        data_.reserve(capacity);
+public:
+    CircularBuffer() : head_(0), tail_(0), size_(0), capacity_(N) {
+        static_assert(N > 0, "Circular buffer size must be positive");
+        data_.reserve(N);
     }
 
-    bool push(const T& item) {
-        data_[head_] = item;
+    void push(const T& value) {
+        data_[head_] = value;
         size_ = std::min(size_ + 1, capacity_);
-        if (head_ == tail_ && size_ == capacity_) {
+        if (head_ == tail_ && isFull()) {
             tail_ = (tail_ + 1) % capacity_;
         }
         head_ = (head_ + 1) % capacity_;
-        return true;
-    }
-
-    T front() {
-        if (empty()) throw std::runtime_error("Buffer is empty");
-        T front = data_[tail_];
-        return front;
     }
 
     T pop() {
-        if (empty()) throw std::runtime_error("Buffer is empty");
+        if (empty()) throw std::runtime_error("Circular buffer is empty");
         T item = data_[tail_];
         tail_ = (tail_ + 1) % capacity_;
-        size_ = std::min(size_ - 1, capacity_);
+        size_--;
         return item;
     }
 
-    bool isFull() const {
-        return head_ == tail_;
+    T front() {
+        if (empty()) throw std::runtime_error("Circular buffer is empty");
+        T item = data_[tail_];
+        return item;
     }
 
     bool empty() const {
         return size_ == 0;
     }
 
+    bool isFull() const {
+        return size_ == capacity_;
+    }
+
     void clear() {
-        head_ = tail_ = 0;
         size_ = 0;
+        head_ = 0;
+        tail_ = 0;
     }
 };
 }

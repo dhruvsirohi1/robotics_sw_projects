@@ -7,7 +7,7 @@
 using namespace circular_buffer;
 
 TEST(CircularBufferTest, PushAndPopBasic) {
-    CircularBuffer<int> buffer(3);
+    CircularBuffer<int, 3> buffer;
     buffer.push(1);
     buffer.push(2);
     buffer.push(3);
@@ -19,7 +19,7 @@ TEST(CircularBufferTest, PushAndPopBasic) {
 }
 
 TEST(CircularBufferTest, OverwriteWhenFull) {
-    CircularBuffer<int> buffer(2);
+    CircularBuffer<int, 2> buffer;
     buffer.push(10);
     buffer.push(20);
     buffer.push(30);  // overwrites 10
@@ -30,7 +30,7 @@ TEST(CircularBufferTest, OverwriteWhenFull) {
 }
 
 TEST(CircularBufferTest, FrontPeeksWithoutPop) {
-    CircularBuffer<std::string> buffer(2);
+    CircularBuffer<std::string, 2> buffer;
     buffer.push("a");
     buffer.push("b");
 
@@ -40,7 +40,7 @@ TEST(CircularBufferTest, FrontPeeksWithoutPop) {
 }
 
 TEST(CircularBufferTest, ClearWorks) {
-    CircularBuffer<int> buffer(2);
+    CircularBuffer<int, 2> buffer;
     buffer.push(1);
     buffer.push(2);
     buffer.clear();
@@ -49,7 +49,7 @@ TEST(CircularBufferTest, ClearWorks) {
 }
 
 TEST(CircularBufferTest, ExceptionsOnEmpty) {
-    CircularBuffer<int> buffer(1);
+    CircularBuffer<int, 1> buffer;
     EXPECT_THROW(buffer.pop(), std::runtime_error);
     EXPECT_THROW(buffer.front(), std::runtime_error);
 }
