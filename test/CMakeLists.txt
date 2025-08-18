@@ -10,6 +10,12 @@ target_include_directories(test_circular_buffer PRIVATE
         ${PROJECT_SOURCE_DIR}/include/circular_buffer
 )
 
+add_executable(test_circular_buffer_ts test_circular_buffer_ts.cpp)
+target_link_libraries(test_circular_buffer_ts gtest_main)
+target_include_directories(test_circular_buffer_ts PRIVATE
+        ${PROJECT_SOURCE_DIR}/include/circular_buffer
+)
+
 add_executable(test_memory_pool test_memory_pool.cpp)
 target_link_libraries(test_memory_pool gtest_main)
 target_include_directories(test_memory_pool PRIVATE

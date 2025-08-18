@@ -16,7 +16,7 @@ struct TestStruct {
 };
 
 TEST(MemoryPoolTest, AllocateDeallocate) {
-    MemoryPool<TestStruct, 10> pool;
+    MemoryPool<TestStruct, 5> pool;
 
     TestStruct* obj = pool.allocate();
     TestStruct* obj2 = pool.allocate();
@@ -29,8 +29,14 @@ TEST(MemoryPoolTest, AllocateDeallocate) {
     EXPECT_EQ(obj->name, "robot");
 
     obj->~TestStruct();   // manually call destructor
+    obj2->~TestStruct();
     pool.deallocate(obj);
     pool.deallocate(obj2);
+    TestStruct* c = pool.allocate();
+    new (c) TestStruct(30, "C");
+    EXPECT_EQ(c->id, 30);
+    c->~TestStruct();
+    pool.deallocate(c);
     printf("\n\nwor\n\n");
 }
 
