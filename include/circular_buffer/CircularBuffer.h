@@ -9,75 +9,58 @@
 
 namespace circular_buffer {
 
-template<typename T, std::size_t N>
+template <typename T, std::size_t N>
 class CircularBuffer {
-    std::vector<T> data_;
-    std::size_t head_;
-    std::size_t tail_;
-    std::size_t size_;
-    std::size_t capacity_;
-    mutable std::mutex mutex_;
-    mutable std::condition_variable cv_;
-    bool closed_ = false;
+    static_assert(N > 0, "N must be positive");
+
+    std::array<T, N> data;
+    int head_ = 0;
+    int tail_ = 0;
+    int size_ = 0;
+    int capacity_ = N;
 
 public:
-    CircularBuffer() : head_(0), tail_(0), size_(0), capacity_(N) {
-        static_assert(N > 0, "Circular buffer size must be positive");
-        data_.resize(N);
+
+    CircularBuffer() {
+        printf("Circular buffer created\n");
     }
 
-    void push(const T& value) {
-        std::unique_lock<std::mutex> lock(mutex_);
-        data_[head_] = value;
-        if (head_ == tail_ && size_ == capacity_) {
-            tail_ = (tail_ + 1) % capacity_;
-        } else {
-            ++size_;
+    void push(const T& t) {
+        data[head_] = t;
+        if (size_ == capacity_) {
+            tail_ = (head_ + 1) % capacity_;
         }
         head_ = (head_ + 1) % capacity_;
-        cv_.notify_one();
+        size_ = size_ + 1 > capacity_ ? capacity_ : size_ + 1;
     }
 
-    std::optional<T> pop() {
-        std::unique_lock<std::mutex> lock(mutex_);
-        cv_.wait(lock, [this]{ return size_ > 0 || closed_; });
-        // if (size_ == 0) throw std::runtime_error("Circular buffer is empty");
-        if (closed_) return std::nullopt;
-        T item = std::move(data_[tail_]);
+    T pop() {
+        if (size_ == 0) {
+            throw std::runtime_error("Empty circular buffer");
+        }
+        T item = data[tail_];
         tail_ = (tail_ + 1) % capacity_;
         size_--;
         return item;
     }
 
-    T front() {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (size_ == 0) throw std::runtime_error("Circular buffer is empty");
-        T item = data_[tail_];
-        return item;
-    }
-
-    bool empty() const {
-        std::lock_guard<std::mutex> lock(mutex_);
+    bool empty() {
         return size_ == 0;
     }
 
-    bool isFull() const {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return size_ == capacity_;
+    T front() const {
+        if (size_ == 0) {
+            throw std::runtime_error("Empty circular buffer");
+        }
+        return data[tail_];
     }
 
     void clear() {
-        std::lock_guard<std::mutex> lock(mutex_);
-        size_ = 0;
         head_ = 0;
         tail_ = 0;
+        size_ = 0;
     }
 
-    void close() {
-        std::lock_guard<std::mutex> lock(mutex_);
-        closed_ = true;
-        cv_.notify_all();
-    }
 };
 }
 #endif //CIRCULARBUFFER_H
