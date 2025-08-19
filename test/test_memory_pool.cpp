@@ -63,12 +63,12 @@ TEST(MemoryPoolTest, MemoryReuse) {
     pool.deallocate(c);
 }
 
-// TEST(MemoryPoolTest, ExhaustionThrows) {
-//     MemoryPool<int, 1> pool;
-//     int* a = pool.allocate();
-//     EXPECT_THROW(pool.allocate(), std::bad_alloc);
-//     pool.deallocate(a);
-// }
+TEST(MemoryPoolTest, ExhaustionThrows) {
+    MemoryPool<int, 1> pool;
+    int* a = pool.allocate();
+    EXPECT_THROW(pool.allocate(), std::bad_alloc);
+    pool.deallocate(a);
+}
 
 TEST(MemoryPoolTest, MultipleAllocFreeCycle) {
     printf("Test 3\n");

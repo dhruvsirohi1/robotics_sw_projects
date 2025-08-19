@@ -8,52 +8,51 @@
 
 namespace memory_pool {
 
-template<typename T, std::size_t N>
+template <typename T, std::size_t N>
 class MemoryPool {
     static_assert(N > 0, "N must be greater than 0");
-    // static_assert(sizeof(T) > sizeof(void*), " T must be greater than sizeof(void*)");
 
-    constexpr static auto A  = std::max(alignof(T), alignof(void*));
-    constexpr static auto S  = std::max(sizeof(T), sizeof(void*));
+    static constexpr auto A = alignof(T) > alignof(void*) ? alignof(T) : alignof(void*);
+    static constexpr auto B = sizeof(T) > sizeof(void*) ? sizeof(T) : sizeof(void*);
 
-    constexpr static auto BLOCK_SIZE = (S + A - 1) / A * A;
+    static constexpr auto BLOCK_SIZE = (B + A - 1) / A * A;
 
     std::array<std::byte, N * BLOCK_SIZE> data_;
     void* free_ptr_;
 
 public:
-
     MemoryPool() : free_ptr_(nullptr) {
-        // Store the address of the (n+1)th block in the nth block
+        printf("MemoryPool::MemoryPool()\n");
+
+        // Store the address of the next free block in the current block
         for (int i = 0; i < N - 1; i++) {
-            std::byte* curr = data_.data() + (i * sizeof(T));
-            std::byte* next = curr + sizeof(T);
-            std::memcpy(curr, &next, sizeof(T));
+            std::byte* current = data_.data() + i * BLOCK_SIZE;
+            std::byte* next = current + BLOCK_SIZE;
+            std::memcpy(current, &next, sizeof(void*));
         }
 
-        // Store nullptr in the last
+        // Store nullptr in the last block
         void* nullp = nullptr;
-        std::memcpy(data_.data() + (N - 1) * sizeof(T), &nullp, sizeof(void*));
-        // Store the address of the first block in free_ptr_
+        std::memcpy(data_.data() + (N - 1) * BLOCK_SIZE, &nullp, sizeof(void*));
+
+        // Make free_ptr_ point to the first free block
         free_ptr_ = data_.data();
     }
 
     T* allocate() {
         if (free_ptr_ == nullptr) {
-            throw std::runtime_error("No memory pool available");
+            throw std::bad_alloc();
         }
-        T* ptr = static_cast<T*>(free_ptr_);
+        T* ptr = reinterpret_cast<T*>(free_ptr_);
         std::memcpy(&free_ptr_, free_ptr_, sizeof(void*));
         return ptr;
     }
 
     void deallocate(T* ptr) {
-        if (ptr == nullptr) {
-            throw std::runtime_error("Can't deallocate nullptr");
-        }
         std::memcpy(ptr, &free_ptr_, sizeof(void*));
         std::memcpy(&free_ptr_, &ptr, sizeof(void*));
     }
+
 };
 }
 #endif //MEMORY_POOL_H
