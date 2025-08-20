@@ -8,27 +8,25 @@
 
 namespace memory_pool {
 
-template <typename T, std::size_t N>
+template<typename T, std::size_t N>
 class MemoryPool {
     static_assert(N > 0, "N must be greater than 0");
 
-    static constexpr auto A = alignof(T) > alignof(void*) ? alignof(T) : alignof(void*);
-    static constexpr auto B = sizeof(T) > sizeof(void*) ? sizeof(T) : sizeof(void*);
+    constexpr static auto S = sizeof(T) > sizeof(void*) ? sizeof(T) : sizeof(void*);
+    constexpr static auto A = alignof(T) > alignof(void*) ? alignof(T) : alignof(void*);
 
-    static constexpr auto BLOCK_SIZE = (B + A - 1) / A * A;
+    constexpr static auto BLOCK_SIZE = (S + A - 1) / A * A;
 
     std::array<std::byte, N * BLOCK_SIZE> data_;
     void* free_ptr_;
 
 public:
-    MemoryPool() : free_ptr_(nullptr) {
-        printf("MemoryPool::MemoryPool()\n");
 
-        // Store the address of the next free block in the current block
-        for (int i = 0; i < N - 1; i++) {
-            std::byte* current = data_.data() + i * BLOCK_SIZE;
-            std::byte* next = current + BLOCK_SIZE;
-            std::memcpy(current, &next, sizeof(void*));
+    MemoryPool() : free_ptr_(nullptr) {
+        for (std::size_t i = 0; i < N - 1; ++i) {
+            std::byte* curr = data_.data() + i * BLOCK_SIZE;
+            std::byte* next = curr + BLOCK_SIZE;
+            std::memcpy(curr, &next, sizeof(void*));
         }
 
         // Store nullptr in the last block
@@ -52,7 +50,6 @@ public:
         std::memcpy(ptr, &free_ptr_, sizeof(void*));
         std::memcpy(&free_ptr_, &ptr, sizeof(void*));
     }
-
 };
 }
 #endif //MEMORY_POOL_H
