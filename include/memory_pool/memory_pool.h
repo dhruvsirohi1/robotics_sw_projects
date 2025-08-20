@@ -17,7 +17,7 @@ class MemoryPool {
 
     constexpr static auto BLOCK_SIZE = (S + A - 1) / A * A;
 
-    std::array<std::byte, N * BLOCK_SIZE> data_;
+    alignas(A) std::array<std::byte, N * BLOCK_SIZE> data_;
     void* free_ptr_;
 
 public:
