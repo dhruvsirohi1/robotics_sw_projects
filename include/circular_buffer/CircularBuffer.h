@@ -13,11 +13,11 @@ template <typename T, std::size_t N>
 class CircularBuffer {
     static_assert(N > 0, "N must be positive");
 
-    std::array<T, N> data;
-    int head_ = 0;
-    int tail_ = 0;
-    int size_ = 0;
-    int capacity_ = N;
+    std::array<T, N> buffer_;
+    std::size_t size_{0};
+    std::size_t capacity_{N};
+    std::size_t head_{0};
+    std::size_t tail_{0};
 
 public:
 
@@ -25,42 +25,45 @@ public:
         printf("Circular buffer created\n");
     }
 
-    void push(const T& t) {
-        data[head_] = t;
+    void push(const T& value) {
+        buffer_[head_] = value;
         if (size_ == capacity_) {
             tail_ = (head_ + 1) % capacity_;
         }
         head_ = (head_ + 1) % capacity_;
-        size_ = size_ + 1 > capacity_ ? capacity_ : size_ + 1;
+        size_ = std::min(size_ + 1, capacity_);
+    }
+
+    T front() {
+        if (size_ == 0) {
+            throw std::runtime_error("Empty buffer");
+        }
+        return buffer_[tail_];
     }
 
     T pop() {
         if (size_ == 0) {
-            throw std::runtime_error("Empty circular buffer");
+            throw std::runtime_error("Empty buffer");
         }
-        T item = data[tail_];
+        T item = buffer_[tail_];
         tail_ = (tail_ + 1) % capacity_;
         size_--;
         return item;
+    }
+
+    void clear() {
+        size_ = 0;
+        head_ = 0;
+        tail_ = 0;
     }
 
     bool empty() {
         return size_ == 0;
     }
 
-    T front() const {
-        if (size_ == 0) {
-            throw std::runtime_error("Empty circular buffer");
-        }
-        return data[tail_];
+    bool full() {
+        return size_ == capacity_;
     }
-
-    void clear() {
-        head_ = 0;
-        tail_ = 0;
-        size_ = 0;
-    }
-
 };
 }
 #endif //CIRCULARBUFFER_H
