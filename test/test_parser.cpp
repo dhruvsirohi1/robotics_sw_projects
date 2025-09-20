@@ -8,6 +8,8 @@
 #include <cassert>
 #include <unordered_map>
 
+#include <gtest/gtest.h>
+
 #include "packet_parser/PacketParser.cpp"
 
 // ---------------------------
@@ -56,10 +58,7 @@ void createDummyPackets() {
     ofs.close();
 }
 
-// ---------------------------
-// Main Test
-// ---------------------------
-int main() {
+TEST(ParserTest, FrameReassembly) {
     // Step 1: Create dummy packets.bin
     createDummyPackets();
 
@@ -75,10 +74,8 @@ int main() {
 
     // Step 3: Verify output frame
     Frame &f = frames[1];
-    assert(f.complete == true);
+    ASSERT_TRUE(f.complete);
     std::string reconstructed(f.data.begin(), f.data.end());
-    assert(reconstructed == "HELLO_FUNNY_WORLD");
-
-    std::cout << "✅ Test passed! Frame reconstructed as: " << reconstructed << std::endl;
-    return 0;
+    EXPECT_EQ(reconstructed, "HELLO_FUNNY_WORLD");
 }
+

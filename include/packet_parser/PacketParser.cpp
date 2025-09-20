@@ -54,7 +54,8 @@ void saveFrame(const Frame &frame) {
     std::ofstream ofs;
     std::string filename = "frame_" + std::to_string(frame.frame_id) + ".bin";
     ofs.open(filename, std::ios::out | std::ios::binary);
-    ofs.write(reinterpret_cast<const char *>(&frame.data[0]), frame.data.size());
+    ofs.write(reinterpret_cast<const char *>(frame.data.data()), frame.data.size());
+    ofs.close();
 }
 
 // TODO: handle a packet and update corresponding frame
