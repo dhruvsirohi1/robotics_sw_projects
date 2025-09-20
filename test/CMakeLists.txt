@@ -22,6 +22,12 @@ target_include_directories(test_memory_pool PRIVATE
         ${PROJECT_SOURCE_DIR}/include/memory_pool
 )
 
+add_executable(test_parser test_parser.cpp)
+target_link_libraries(test_parser gtest_main)
+target_include_directories(test_parser PRIVATE
+        ${PROJECT_SOURCE_DIR}/include/packet_parser
+)
+
 include(GoogleTest)
 gtest_discover_tests(test_odometry)
 gtest_discover_tests(test_circular_buffer)

@@ -16,7 +16,7 @@ struct Packet {
 };
 
 struct Frame {
-    uint16_t frame_id;
+    uint16_t frame_id{};
     std::vector<uint8_t> data;
     bool complete = false;
 };
@@ -33,12 +33,13 @@ Packet parsePacket(std::ifstream &ifs) {
     ifs.read(reinterpret_cast<char *>(&pkt.frame_id), sizeof(pkt.frame_id));
     ifs.read(reinterpret_cast<char *>(&pkt.packet_id), sizeof(pkt.packet_id));
     ifs.read(reinterpret_cast<char *>(&pkt.flags), sizeof(pkt.flags));
+    ifs.read(reinterpret_cast<char *>(&pkt.payload_size), sizeof(pkt.payload_size));
 
     if (!ifs) throw std::runtime_error("Error reading packet: Unexpected EOF...");
     // resize payload vector
     (pkt.payload).resize(pkt.payload_size);
     // read payload into pkt.payload
-    ifs.read(reinterpret_cast<char *>(&pkt.payload.data()), pkt.payload_size);
+    ifs.read(reinterpret_cast<char *>(pkt.payload.data()), pkt.payload_size);
 
     if (!ifs) throw std::runtime_error("Error reading packet: Unexpected EOF...");
 
@@ -75,24 +76,3 @@ void handlePacket(const Packet &pkt, std::unordered_map<uint16_t, Frame> &frames
     }
 }
 
-// ---------------------------
-// Main
-// ---------------------------
-int main() {
-    std::ifstream infile("packets.bin", std::ios::binary);
-    if (!infile.is_open()) {
-        std::cerr << "Failed to open packets.bin" << std::endl;
-        return 1;
-    }
-
-    std::unordered_map<uint16_t, Frame> frames;
-
-    // loop through file until EOF
-    while (infile.peek() != EOF) {
-        Packet pkt = parsePacket(infile);
-        handlePacket(pkt, frames);
-    }
-
-    infile.close();
-    return 0;
-}
