@@ -33,13 +33,12 @@ Packet parsePacket(std::ifstream &ifs) {
     ifs.read(reinterpret_cast<char *>(&pkt.frame_id), sizeof(pkt.frame_id));
     ifs.read(reinterpret_cast<char *>(&pkt.packet_id), sizeof(pkt.packet_id));
     ifs.read(reinterpret_cast<char *>(&pkt.flags), sizeof(pkt.flags));
-    ifs.read(reinterpret_cast<char *>(&pkt.frame_id), sizeof(pkt.frame_id));
 
     if (!ifs) throw std::runtime_error("Error reading packet: Unexpected EOF...");
     // resize payload vector
     (pkt.payload).resize(pkt.payload_size);
     // read payload into pkt.payload
-    ifs.read(reinterpret_cast<char *>(&pkt.payload), sizeof(pkt.payload));
+    ifs.read(reinterpret_cast<char *>(&pkt.payload.data()), pkt.payload_size);
 
     if (!ifs) throw std::runtime_error("Error reading packet: Unexpected EOF...");
 
@@ -61,14 +60,14 @@ void saveFrame(const Frame &frame) {
 void handlePacket(const Packet &pkt, std::unordered_map<uint16_t, Frame> &frames) {
     // if SOF -> start a new frame
     Frame &frame = frames[pkt.frame_id];
-    frame.frame_id = pkt.packet_id;
+    frame.frame_id = pkt.frame_id;
 
     if (pkt.flags & 0x1) { // SoF
         frame.data.clear();
         frame.complete = false;
     }
     // append payload to the frame’s data
-    frame.data.insert(frame.data.end(), frame.data.begin(), frame.data.end());
+    frame.data.insert(frame.data.end(), pkt.payload.begin(), pkt.payload.end());
     // if EOF -> mark frame complete and save to disk
     if (pkt.flags & 0x2) {
         frame.complete = true;
