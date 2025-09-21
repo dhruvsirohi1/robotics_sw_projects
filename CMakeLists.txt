@@ -12,11 +12,7 @@ add_library(robot_localization
 
 #add_library(circular_buffer)
 # Tell CMake to use pkg-config
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(OPENCV REQUIRED opencv4)
-
-include_directories(${OPENCV_INCLUDE_DIRS})
-link_directories(${OPENCV_LIBRARY_DIRS})
+find_package(OPENCV REQUIRED)
 
 add_executable(CameraCalibration include/camera_calibration/CameraCalibration.cpp)
 target_link_libraries(CameraCalibration ${OpenCV_LIBS})
