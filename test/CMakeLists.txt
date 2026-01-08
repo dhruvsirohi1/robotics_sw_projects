@@ -31,3 +31,4 @@ target_include_directories(test_parser PRIVATE
 include(GoogleTest)
 gtest_discover_tests(test_odometry)
 gtest_discover_tests(test_circular_buffer)
+gtest_discover_tests(test_memory_pool)
